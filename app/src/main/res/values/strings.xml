@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RateIt</string>
+
+    <!-- Login -->
+    <string name="login_with_discord">Login with Discord</string>
+    <string name="login_description">Sign in to share ratings with your friends</string>
+
+    <!-- Groups -->
+    <string name="my_groups">My Groups</string>
+    <string name="create_group">Create Group</string>
+    <string name="join_group">Join Group</string>
+    <string name="group_name">Group Name</string>
+    <string name="invite_code">Invite Code</string>
+    <string name="discord_webhook_url">Discord Webhook URL (Optional)</string>
+    <string name="members">Members</string>
+    <string name="leave_group">Leave Group</string>
+    <string name="delete_group">Delete Group</string>
+    <string name="copy_invite_code">Copy Invite Code</string>
+
+    <!-- Ratings -->
+    <string name="add_rating">Add Rating</string>
+    <string name="item_name">Item Name</string>
+    <string name="category">Category</string>
+    <string name="score">Score</string>
+    <string name="comment">Comment (Optional)</string>
+    <string name="add_image">Add Image</string>
+    <string name="submit_rating">Submit Rating</string>
+
+    <!-- Categories -->
+    <string name="category_food">Food</string>
+    <string name="category_movies">Movies</string>
+    <string name="category_games">Games</string>
+    <string name="category_music">Music</string>
+    <string name="category_places">Places</string>
+    <string name="category_other">Other</string>
+
+    <!-- Stats -->
+    <string name="stats">Stats</string>
+    <string name="top_rated">Top Rated</string>
+    <string name="most_rated">Most Rated</string>
+    <string name="categories">Categories</string>
+    <string name="leaderboard">Leaderboard</string>
+
+    <!-- Common -->
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="loading">Loading…</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="retry">Retry</string>
+    <string name="no_items">No items yet</string>
+    <string name="no_ratings">No ratings yet</string>
+</resources>

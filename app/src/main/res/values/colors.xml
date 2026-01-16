@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary colors -->
+    <color name="primary">#5865F2</color>
+    <color name="primary_dark">#4752C4</color>
+    <color name="primary_light">#7289DA</color>
+
+    <!-- Accent -->
+    <color name="accent">#57F287</color>
+
+    <!-- Discord brand colors -->
+    <color name="discord_blurple">#5865F2</color>
+    <color name="discord_green">#57F287</color>
+    <color name="discord_yellow">#FEE75C</color>
+    <color name="discord_fuchsia">#EB459E</color>
+    <color name="discord_red">#ED4245</color>
+
+    <!-- Score colors -->
+    <color name="score_excellent">#57F287</color>
+    <color name="score_good">#FEE75C</color>
+    <color name="score_average">#FFA500</color>
+    <color name="score_poor">#ED4245</color>
+
+    <!-- Background -->
+    <color name="background">#FFFFFF</color>
+    <color name="background_secondary">#F2F3F5</color>
+    <color name="surface">#FFFFFF</color>
+
+    <!-- Text -->
+    <color name="text_primary">#23272A</color>
+    <color name="text_secondary">#4F545C</color>
+    <color name="text_muted">#72767D</color>
+
+    <!-- Other -->
+    <color name="divider">#E3E5E8</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

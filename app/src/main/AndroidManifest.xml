@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <application
+        android:name=".RateItApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.RateIt"
+        android:usesCleartextTraffic="false"
+        tools:targetApi="34">
+
+        <!-- Login Activity -->
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RateIt.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Discord OAuth callback -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="rateit"
+                    android:host="auth"
+                    android:path="/callback" />
+            </intent-filter>
+        </activity>
+
+        <!-- Group List Activity -->
+        <activity
+            android:name=".ui.groups.GroupListActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RateIt.NoActionBar" />
+
+        <!-- Create Group Activity -->
+        <activity
+            android:name=".ui.groups.CreateGroupActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RateIt.NoActionBar" />
+
+        <!-- Join Group Activity -->
+        <activity
+            android:name=".ui.groups.JoinGroupActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RateIt.NoActionBar" />
+
+        <!-- Group Settings Activity -->
+        <activity
+            android:name=".ui.groups.GroupSettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RateIt.NoActionBar" />
+
+        <!-- Group Feed Activity -->
+        <activity
+            android:name=".ui.feed.GroupFeedActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RateIt.NoActionBar" />
+
+        <!-- Add Rating Activity -->
+        <activity
+            android:name=".ui.rating.AddRatingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RateIt.NoActionBar" />
+
+        <!-- Rating Detail Activity -->
+        <activity
+            android:name=".ui.rating.RatingDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RateIt.NoActionBar" />
+
+        <!-- Item Detail Activity -->
+        <activity
+            android:name=".ui.item.ItemDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RateIt.NoActionBar" />
+
+        <!-- Stats Activity -->
+        <activity
+            android:name=".ui.stats.StatsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RateIt.NoActionBar" />
+
+        <!-- File Provider for camera images -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

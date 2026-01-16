@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is member of a group
+    function isGroupMember(groupId) {
+      return isAuthenticated() &&
+        request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+    }
+
+    // Helper function to check if user is owner of a group
+    function isGroupOwner(groupId) {
+      return isAuthenticated() &&
+        request.auth.uid == get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Groups collection
+    match /groups/{groupId} {
+      allow read: if isAuthenticated() && request.auth.uid in resource.data.memberIds;
+      allow create: if isAuthenticated();
+      allow update: if isGroupOwner(groupId);
+      allow delete: if isGroupOwner(groupId);
+    }
+
+    // Items collection
+    match /items/{itemId} {
+      allow read: if isGroupMember(resource.data.groupId);
+      allow create: if isGroupMember(request.resource.data.groupId);
+      allow update: if isGroupMember(resource.data.groupId);
+      allow delete: if isGroupOwner(resource.data.groupId);
+    }
+
+    // Ratings collection
+    match /ratings/{ratingId} {
+      allow read: if isGroupMember(resource.data.groupId);
+      allow create: if isGroupMember(request.resource.data.groupId) &&
+                       request.auth.uid == request.resource.data.userId;
+      allow update: if request.auth.uid == resource.data.userId;
+      allow delete: if request.auth.uid == resource.data.userId ||
+                       isGroupOwner(resource.data.groupId);
+    }
+
+    // Comments collection
+    match /comments/{commentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if request.auth.uid == resource.data.userId;
+      allow delete: if request.auth.uid == resource.data.userId;
+    }
+  }
+}
