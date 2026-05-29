@@ -24,6 +24,8 @@ The user has two sibling "rating" hobby projects in `~/Documents/coding_projects
 | **Name & repo** | Keep the **ScawwyRate** name; reuse the existing `github.com/PattedyrAI/ScawwyRate` repo (replace the Android code) |
 | **Categories** | **Fixed set:** Food, Movies, Games, Music, Places, Other |
 | **Execution approach** | **A — transform everrate in place** (reuse its infra, rebuild the domain) |
+| **Backend host** | **Managed Supabase** (cloud, free tier) — Railway is *not* used for the backend |
+| **Launch deliverable** | **Android release APK** (distributable) **+ Expo web build deployed to Railway**; iOS later |
 
 ### How the choices reconcile
 
@@ -72,6 +74,13 @@ A cross-platform mobile/web app where friend groups privately rate *anything*:
 - everrate's **public follow/follower** social model — replaced by private groups.
 - **Likes** — not part of the chosen concept. Easy to add later.
 - (Notifications: deferred; not in initial phases.)
+
+### Build & deployment targets
+
+- **Backend:** **managed Supabase** (cloud, free tier) — Discord auth, Postgres+RLS, Storage, Edge Functions. No self-hosting; Railway is *not* used for the backend.
+- **Android:** distributable **release APK**, built via **EAS Build** (cloud) or local `expo prebuild` + `./gradlew assembleRelease`. EAS is the lower-friction default; final call deferred to the Phase 5 plan. Requires an Android keystore for signing.
+- **Web:** Expo **web export** (`npx expo export --platform web` → static `dist/`) **deployed to Railway** as the browser version (static hosting). Same Supabase backend as the app.
+- **iOS:** not a launch target, but the Expo stack keeps it available later at low marginal cost.
 
 ## 5. Data model (Postgres / Supabase)
 
@@ -146,6 +155,7 @@ comments        id (uuid) · rating_id (→ ratings) · user_id (→ profiles) �
 - **Phase 2 — Items & Ratings.** Add item (with dedup), rate (score + photo + comment), item detail, group feed; stat triggers live. *Exit:* a group can accumulate rated items with correct aggregate stats.
 - **Phase 3 — Stats & re-review.** Stats dashboard (top/most/by-category/leaderboard), comments, re-review history. *Exit:* full read experience.
 - **Phase 4 — Discord posting.** Edge Function + trigger; color-coded embed. *Exit:* configuring a group webhook posts new ratings to Discord.
+- **Phase 5 — Build & deploy.** Android release APK (EAS or local Gradle, signed); Expo web export deployed to Railway; smoke-test Discord auth + a full rate flow on a real Android device and on the web URL. *Exit:* an installable APK in hand **and** a live Railway web URL, both talking to managed Supabase.
 
 ## 9. Risks & things to verify at plan time
 
@@ -154,6 +164,8 @@ comments        id (uuid) · rating_id (→ ratings) · user_id (→ profiles) �
 - **Triggering the Edge Function** — decide between Supabase Database Webhooks vs. `pg_net` from a trigger; verify current best practice.
 - **Reusing the ScawwyRate GitHub repo overwrites working Android code** — **tag/branch it first** (e.g. `android-legacy`) so it's recoverable.
 - **Pre-existing uncommitted WIP in the everrate repo** (24 changed files from Feb, drinks-app work) is unrelated to this rebuild and will be superseded; confirm with the user whether to stash/discard before starting Phase 0.
+- **APK signing & build pipeline** — pick EAS Build vs local Gradle early; the Android keystore is a one-time setup gotcha (and must be backed up).
+- **Discord OAuth redirect for the web build on Railway** — the Supabase Discord provider must list the Railway web domain (and the native `scawwyrate://` scheme) as allowed redirect URLs; verify once the Railway URL exists.
 
 ## 10. Open questions (non-blocking; can resolve at plan time)
 
