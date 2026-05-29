@@ -42,18 +42,6 @@ export default function RootLayout() {
         >
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="rating/[id]"
-            options={{ presentation: 'card' }}
-          />
-          <Stack.Screen
-            name="product/[id]"
-            options={{ presentation: 'card' }}
-          />
-          <Stack.Screen
-            name="user/[id]"
-            options={{ presentation: 'card' }}
-          />
         </Stack>
       </QueryClientProvider>
       </ErrorBoundary>
