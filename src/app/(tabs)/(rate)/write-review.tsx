@@ -106,7 +106,7 @@ export default function WriteReviewScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Taste Tags</Text>
           <View style={styles.tagsContainer}>
-            {tags?.map((tag) => (
+            {tags?.map((tag: any) => (
               <TagChip
                 key={tag.id}
                 label={tag.name}
@@ -139,7 +139,7 @@ export default function WriteReviewScreen() {
           <View style={styles.buyAgainRow}>
             <Pressable
               style={[styles.buyAgainButton, wouldBuyAgain === true && styles.buyAgainYes]}
-              onPress={() => setWouldBuyAgain(wouldBuyAgain === true ? null as any : true)}
+              onPress={() => setWouldBuyAgain(wouldBuyAgain === true ? null : true)}
             >
               <Ionicons
                 name="thumbs-up"
@@ -152,7 +152,7 @@ export default function WriteReviewScreen() {
             </Pressable>
             <Pressable
               style={[styles.buyAgainButton, wouldBuyAgain === false && styles.buyAgainNo]}
-              onPress={() => setWouldBuyAgain(wouldBuyAgain === false ? null as any : false)}
+              onPress={() => setWouldBuyAgain(wouldBuyAgain === false ? null : false)}
             >
               <Ionicons
                 name="thumbs-down"

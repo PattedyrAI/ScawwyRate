@@ -1,12 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
+import { isDevMode } from '@/lib/isDevMode';
 import * as ratingsService from '../ratings.service';
 import type { InsertTables } from '@/types/database';
 
 export function useRating(id: string) {
   return useQuery({
     queryKey: queryKeys.ratings.detail(id),
-    queryFn: () => ratingsService.getRating(id),
+    queryFn: () => {
+      if (isDevMode()) return null;
+      return ratingsService.getRating(id);
+    },
     enabled: !!id,
   });
 }
@@ -14,7 +18,10 @@ export function useRating(id: string) {
 export function useUserRatings(userId: string) {
   return useQuery({
     queryKey: queryKeys.ratings.byUser(userId),
-    queryFn: () => ratingsService.getUserRatings(userId),
+    queryFn: () => {
+      if (isDevMode()) return [];
+      return ratingsService.getUserRatings(userId);
+    },
     enabled: !!userId,
   });
 }
@@ -22,7 +29,10 @@ export function useUserRatings(userId: string) {
 export function useProductRatings(productId: string) {
   return useQuery({
     queryKey: queryKeys.ratings.byProduct(productId),
-    queryFn: () => ratingsService.getProductRatings(productId),
+    queryFn: () => {
+      if (isDevMode()) return [];
+      return ratingsService.getProductRatings(productId);
+    },
     enabled: !!productId,
   });
 }
@@ -30,7 +40,10 @@ export function useProductRatings(productId: string) {
 export function useRatingHistory(ratingId: string) {
   return useQuery({
     queryKey: [...queryKeys.ratings.detail(ratingId), 'history'],
-    queryFn: () => ratingsService.getRatingHistory(ratingId),
+    queryFn: () => {
+      if (isDevMode()) return [];
+      return ratingsService.getRatingHistory(ratingId);
+    },
     enabled: !!ratingId,
   });
 }

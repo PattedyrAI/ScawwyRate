@@ -15,7 +15,7 @@ interface RatingDraftState extends RatingDraft {
   setProduct: (id: string, name: string) => void;
   setScore: (score: number) => void;
   setReviewText: (text: string) => void;
-  setWouldBuyAgain: (value: boolean) => void;
+  setWouldBuyAgain: (value: boolean | null) => void;
   toggleTag: (tagId: string) => void;
   reset: () => void;
 }

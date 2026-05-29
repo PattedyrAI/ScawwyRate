@@ -1,13 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/stores/authStore';
+import { isDevMode } from '@/lib/isDevMode';
+import { MOCK_PROFILE, MOCK_PROFILE_STATS } from '@/lib/mockData';
 import * as profileService from '../profile.service';
 import type { UpdateTables } from '@/types/database';
 
 export function useProfileDetail(userId: string) {
   return useQuery({
     queryKey: queryKeys.profiles.detail(userId),
-    queryFn: () => profileService.getProfile(userId),
+    queryFn: () => {
+      if (isDevMode()) return MOCK_PROFILE as any;
+      return profileService.getProfile(userId);
+    },
     enabled: !!userId,
   });
 }
@@ -15,7 +20,10 @@ export function useProfileDetail(userId: string) {
 export function useProfileStats(userId: string) {
   return useQuery({
     queryKey: queryKeys.profiles.stats(userId),
-    queryFn: () => profileService.getProfileStats(userId),
+    queryFn: async () => {
+      if (isDevMode()) return MOCK_PROFILE_STATS as profileService.ProfileStats;
+      return profileService.getProfileStats(userId);
+    },
     enabled: !!userId,
   });
 }

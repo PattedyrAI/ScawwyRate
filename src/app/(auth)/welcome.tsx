@@ -1,12 +1,16 @@
 import { View, Text, StyleSheet, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useSignInWithApple, useSignInWithGoogle } from '@/features/auth/hooks/useAuth';
+import { useAuthStore } from '@/stores/authStore';
 import { colors, typography, spacing } from '@/theme';
 
 export default function WelcomeScreen() {
   const signInApple = useSignInWithApple();
   const signInGoogle = useSignInWithGoogle();
+  const devSkipAuth = useAuthStore((s) => s.devSkipAuth);
+  const router = useRouter();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -42,6 +46,17 @@ export default function WelcomeScreen() {
         >
           <Ionicons name="logo-google" size={20} color={colors.text} />
           <Text style={styles.buttonText}>Continue with Google</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, styles.devButton]}
+          onPress={() => {
+            devSkipAuth();
+            router.replace('/(tabs)/(feed)');
+          }}
+        >
+          <Ionicons name="code-slash" size={20} color={colors.warning} />
+          <Text style={[styles.buttonText, { color: colors.warning }]}>Skip (Dev Mode)</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -116,6 +131,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  devButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderStyle: 'dashed',
   },
   buttonText: {
     ...typography.label,

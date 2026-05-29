@@ -53,7 +53,7 @@ export default function AddProductScreen() {
         // Find or create brand
         let brandId: string | undefined;
         const existingBrand = brands?.find(
-          (b) => b.name.toLowerCase() === values.brandName.toLowerCase(),
+          (b: any) => b.name.toLowerCase() === values.brandName.toLowerCase(),
         );
 
         if (existingBrand) {

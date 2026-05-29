@@ -47,7 +47,8 @@
         {
           "photosPermission": "Allow Everrate to access your photos to add drink images."
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

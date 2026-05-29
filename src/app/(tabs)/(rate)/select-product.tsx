@@ -54,7 +54,7 @@ export default function SelectProductScreen() {
         <Pressable onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
-        <Text style={styles.title}>What are you drinking?</Text>
+        <Text style={styles.title}>What are you rating?</Text>
       </View>
 
       <View style={styles.searchContainer}>
@@ -63,7 +63,7 @@ export default function SelectProductScreen() {
           style={styles.searchInput}
           value={query}
           onChangeText={setQuery}
-          placeholder="Search for a drink..."
+          placeholder="Search drinks, snacks, coffee..."
           placeholderTextColor={colors.textMuted}
           autoFocus
           autoCorrect={false}
@@ -85,7 +85,7 @@ export default function SelectProductScreen() {
             <Pressable style={styles.addNewButton} onPress={handleAddNew}>
               <Ionicons name="add" size={24} color={colors.primary} />
               <Text style={styles.addNewText}>
-                Can't find it? Add "{query}" as a new drink
+                Can't find it? Add "{query}"
               </Text>
             </Pressable>
           ) : null

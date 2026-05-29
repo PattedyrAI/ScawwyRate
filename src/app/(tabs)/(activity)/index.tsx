@@ -71,7 +71,7 @@ export default function ActivityScreen() {
     [handlePress],
   );
 
-  const hasUnread = notifications?.some((n) => !n.is_read);
+  const hasUnread = notifications?.some((n: any) => !n.is_read);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

@@ -1,4 +1,4 @@
-import * as Sharing from 'expo-sharing';
+import { Share } from 'react-native';
 import { getScoreLabel } from './formatScore';
 
 interface ShareableRating {
@@ -19,8 +19,5 @@ export async function shareRating(rating: ShareableRating) {
     `${rating.score}/10 - ${label}${review}\n\n` +
     `Rated by @${rating.username} on Everrate`;
 
-  const isAvailable = await Sharing.isAvailableAsync();
-  if (isAvailable) {
-    await Sharing.shareAsync(message);
-  }
+  await Share.share({ message });
 }

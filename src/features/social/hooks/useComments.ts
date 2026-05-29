@@ -1,12 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/stores/authStore';
+import { isDevMode } from '@/lib/isDevMode';
 import * as commentsService from '../comments.service';
 
 export function useComments(ratingId: string) {
   return useQuery({
     queryKey: queryKeys.comments.byRating(ratingId),
-    queryFn: () => commentsService.getComments(ratingId),
+    queryFn: () => {
+      if (isDevMode()) return [];
+      return commentsService.getComments(ratingId);
+    },
     enabled: !!ratingId,
   });
 }
@@ -41,7 +45,10 @@ export function useIsLiked(ratingId: string) {
 
   return useQuery({
     queryKey: queryKeys.likes.isLiked(user?.id ?? '', ratingId),
-    queryFn: () => commentsService.isLiked(user!.id, ratingId),
+    queryFn: () => {
+      if (isDevMode()) return false;
+      return commentsService.isLiked(user!.id, ratingId);
+    },
     enabled: !!user && !!ratingId,
   });
 }
@@ -54,7 +61,6 @@ export function useToggleLike(ratingId: string) {
     mutationFn: (currentlyLiked: boolean) =>
       commentsService.toggleLike(user!.id, ratingId, currentlyLiked),
     onMutate: async (currentlyLiked) => {
-      // Optimistic update
       await queryClient.cancelQueries({
         queryKey: queryKeys.likes.isLiked(user!.id, ratingId),
       });

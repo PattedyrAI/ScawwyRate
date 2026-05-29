@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
 import type { Profile } from '@/types/database';
 
 export async function signInWithApple() {
@@ -24,21 +26,41 @@ export async function signInWithApple() {
 }
 
 export async function signInWithGoogle() {
-  // Google Sign-In for React Native requires expo-auth-session or a native module.
-  // For now, use Supabase's OAuth redirect flow.
+  const redirectTo = makeRedirectUri();
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'everrate://auth/callback',
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent',
-      },
+      redirectTo,
+      skipBrowserRedirect: true,
     },
   });
 
   if (error) throw error;
-  return data;
+  if (!data.url) throw new Error('No OAuth URL returned');
+
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+  if (result.type !== 'success') {
+    throw new Error('OAuth cancelled');
+  }
+
+  // Extract tokens from the redirect URL
+  const url = new URL(result.url);
+  const params = new URLSearchParams(url.hash.substring(1)); // tokens are in the fragment
+  const accessToken = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
+
+  if (accessToken && refreshToken) {
+    const { data: session, error: sessionError } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (sessionError) throw sessionError;
+    return session;
+  }
+
+  throw new Error('No tokens in OAuth redirect');
 }
 
 export async function signOut() {
