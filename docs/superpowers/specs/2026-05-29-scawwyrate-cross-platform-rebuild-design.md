@@ -1,7 +1,7 @@
 # ScawwyRate — Cross-Platform Rebuild (everrate + ScawwyRate merge)
 
 - **Date:** 2026-05-29
-- **Status:** Design — awaiting user review
+- **Status:** Design — approved (backend revised: self-hosted Supabase on Railway)
 - **Author:** Claude (brainstorming session)
 
 ## 1. Context & the core finding
@@ -24,8 +24,8 @@ The user has two sibling "rating" hobby projects in `~/Documents/coding_projects
 | **Name & repo** | Keep the **ScawwyRate** name; reuse the existing `github.com/PattedyrAI/ScawwyRate` repo (replace the Android code) |
 | **Categories** | **Fixed set:** Food, Movies, Games, Music, Places, Other |
 | **Execution approach** | **A — transform everrate in place** (reuse its infra, rebuild the domain) |
-| **Backend host** | **Managed Supabase** (cloud, free tier) — Railway is *not* used for the backend |
-| **Launch deliverable** | **Android release APK** (distributable) **+ Expo web build deployed to Railway**; iOS later |
+| **Backend host** | **Self-hosted Supabase on Railway** (Docker stack). Dev against **local Supabase** (CLI); deploy the stack to Railway as the final step |
+| **Launch deliverable** | **Android release APK** (distributable) **+ Expo web build on Railway** **+ self-hosted Supabase backend on Railway**; iOS later |
 
 ### How the choices reconcile
 
@@ -34,6 +34,8 @@ Because the user wants ScawwyRate's *concept* but on a *cross-platform* stack, S
 > **Foundation = everrate** (Expo/RN/TS + Supabase). **Product = ScawwyRate's concept**, rebuilt on top. Identity/name = **ScawwyRate**, pushed to the existing ScawwyRate GitHub repo.
 
 Operationally: develop in the local `everrate` folder, rename to ScawwyRate, repoint the git remote to `github.com/PattedyrAI/ScawwyRate`, and replace the old Android app there. **Tag/branch the existing Android code before replacing it** so it stays recoverable.
+
+**Infra:** Railway is the single hosting home — it runs **both** the self-hosted Supabase backend and the static web build. The Android APK is the platform distribution and talks to the Railway backend URL. During development the app runs against a **local** Supabase instance (Supabase CLI); the Railway deployment happens in the final phase.
 
 ## 3. Target product definition
 
@@ -77,9 +79,9 @@ A cross-platform mobile/web app where friend groups privately rate *anything*:
 
 ### Build & deployment targets
 
-- **Backend:** **managed Supabase** (cloud, free tier) — Discord auth, Postgres+RLS, Storage, Edge Functions. No self-hosting; Railway is *not* used for the backend.
-- **Android:** distributable **release APK**, built via **EAS Build** (cloud) or local `expo prebuild` + `./gradlew assembleRelease`. EAS is the lower-friction default; final call deferred to the Phase 5 plan. Requires an Android keystore for signing.
-- **Web:** Expo **web export** (`npx expo export --platform web` → static `dist/`) **deployed to Railway** as the browser version (static hosting). Same Supabase backend as the app.
+- **Backend:** **self-hosted Supabase on Railway** — the full Supabase stack (Postgres + GoTrue auth + PostgREST + Storage + Edge runtime + Kong gateway) deployed to Railway via Docker. The app uses `@supabase/supabase-js` exactly as with managed Supabase; only the URL/keys differ. **Dev** runs against a **local Supabase instance** (`supabase start`, Supabase CLI); the Railway deployment is the final phase.
+- **Android:** distributable **release APK**, built via **EAS Build** (cloud) or local `expo prebuild` + `./gradlew assembleRelease`. EAS is the lower-friction default; final call deferred to the Phase 5 plan. Requires an Android keystore for signing. Points at the Railway backend URL.
+- **Web:** Expo **web export** (`npx expo export --platform web` → static `dist/`) **deployed to Railway** as the browser version (static hosting). Same (Railway-hosted) Supabase backend — so Railway runs both the web front-end and the backend.
 - **iOS:** not a launch target, but the Expo stack keeps it available later at low marginal cost.
 
 ## 5. Data model (Postgres / Supabase)
@@ -150,12 +152,12 @@ comments        id (uuid) · rating_id (→ ratings) · user_id (→ profiles) �
 
 ## 8. Phasing (each phase = its own plan → build cycle)
 
-- **Phase 0 — Foundation reset.** Rename project to ScawwyRate; strip the drinks domain; wire **Discord auth** via Supabase; stand up the new schema + RLS + triggers; tag the old Android repo, repoint remote. *Exit:* Discord login lands on an empty Home, on iOS + Android + web.
+- **Phase 0 — Foundation reset.** Rename project to ScawwyRate; strip the drinks domain; stand up a **local Supabase** dev instance (Supabase CLI); wire **Discord auth** via Supabase's Discord provider; create the new schema + RLS + triggers as migrations; tag the old Android repo, repoint remote. *Exit:* Discord login lands on an empty Home, on iOS + Android + web, against local Supabase.
 - **Phase 1 — Groups.** Create / join-by-code / list / settings; membership + RLS; invite-code RPC. *Exit:* you can create a group and a second account can join it.
 - **Phase 2 — Items & Ratings.** Add item (with dedup), rate (score + photo + comment), item detail, group feed; stat triggers live. *Exit:* a group can accumulate rated items with correct aggregate stats.
 - **Phase 3 — Stats & re-review.** Stats dashboard (top/most/by-category/leaderboard), comments, re-review history. *Exit:* full read experience.
 - **Phase 4 — Discord posting.** Edge Function + trigger; color-coded embed. *Exit:* configuring a group webhook posts new ratings to Discord.
-- **Phase 5 — Build & deploy.** Android release APK (EAS or local Gradle, signed); Expo web export deployed to Railway; smoke-test Discord auth + a full rate flow on a real Android device and on the web URL. *Exit:* an installable APK in hand **and** a live Railway web URL, both talking to managed Supabase.
+- **Phase 5 — Build & deploy.** Deploy the **self-hosted Supabase stack to Railway** (Docker), apply all migrations + seed + deploy Edge Functions against it, configure the Discord OAuth redirect for the Railway domain; deploy the **Expo web export to Railway**; build the **signed Android release APK** (EAS or local Gradle) pointed at the Railway backend URL; smoke-test Discord auth + a full rate flow on a real Android device and on the web URL. *Exit:* an installable APK **and** a live Railway web URL, **both talking to the self-hosted Supabase backend running on Railway**.
 
 ## 9. Risks & things to verify at plan time
 
@@ -166,9 +168,11 @@ comments        id (uuid) · rating_id (→ ratings) · user_id (→ profiles) �
 - **Pre-existing uncommitted WIP in the everrate repo** (24 changed files from Feb, drinks-app work) is unrelated to this rebuild and will be superseded; confirm with the user whether to stash/discard before starting Phase 0.
 - **APK signing & build pipeline** — pick EAS Build vs local Gradle early; the Android keystore is a one-time setup gotcha (and must be backed up).
 - **Discord OAuth redirect for the web build on Railway** — the Supabase Discord provider must list the Railway web domain (and the native `scawwyrate://` scheme) as allowed redirect URLs; verify once the Railway URL exists.
+- **Self-hosting Supabase on Railway is the biggest new ops risk.** It's ~7 services; plan for a persistent Postgres volume + backups, generating the JWT/`anon`/`service_role` keys, Kong gateway routing, and wiring Discord OAuth secrets into GoTrue. Start from a known Supabase-on-Railway template / `docker-compose`, and verify against current Supabase self-hosting docs at deploy time.
+- **Dev/prod parity:** keep dev on local Supabase pinned to the **same image versions** as the Railway deployment, so migrations and Edge Functions behave identically.
 
 ## 10. Open questions (non-blocking; can resolve at plan time)
 
-- Reuse everrate's existing Supabase project or start a fresh one? (Recommend fresh, given the schema is being replaced.)
+- ~~Reuse everrate's existing Supabase project?~~ **Resolved:** dev uses a fresh **local** Supabase instance (CLI); prod is **self-hosted Supabase on Railway**. No managed Supabase cloud project is used.
 - Keep everrate's dark neon-green theme, or restyle for ScawwyRate? (Default: keep — it's good and free.)
 - Visited-date on ratings (from ScawwyRate) — keep as an optional field? (Default: yes, it's cheap.)
