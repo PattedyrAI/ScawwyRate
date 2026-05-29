@@ -440,6 +440,13 @@ secret = "env(SUPABASE_AUTH_EXTERNAL_DISCORD_SECRET)"
 redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
 ```
 
+> **Critical-path gotcha — where the CLI reads `env(...)`.** The Supabase CLI interpolates `env(VAR)` from the **process environment**, not necessarily the project-root `.env` that Expo reads. If the vars aren't visible, the Discord provider is silently *not* configured and login fails with "provider not enabled" — which looks like an auth-code bug but isn't. To be safe, also create a **`supabase/.env`** (the CLI's conventional location) OR `export` the vars in the shell before `supabase start`:
+> ```bash
+> cp .env supabase/.env   # CLI reads env() from here; keep it git-ignored too
+> grep -q '^supabase/\.env$' .gitignore || echo 'supabase/.env' >> .gitignore
+> ```
+> Verification that the provider actually loaded is in Task 5, Step 3.
+
 - [ ] **Step 4: Create `.env`** (git-ignored) with the Discord secrets + placeholder Supabase local vars (filled after `supabase start` in Task 5).
 
 ```bash
@@ -601,6 +608,12 @@ supabase start          # boots Postgres+Auth+Storage in Docker; prints URL + ke
 supabase db reset       # applies migrations (and empty seed)
 ```
 Expected: `supabase start` prints `API URL: http://127.0.0.1:54321` and an `anon key`. Copy the anon key into `.env` (`EXPO_PUBLIC_SUPABASE_ANON_KEY`). `db reset` ends with "Finished supabase db reset".
+
+Then **verify the Discord provider actually loaded** (catches the `env()` gotcha from Task 4):
+```bash
+curl -s http://127.0.0.1:54321/auth/v1/settings | grep -o '"discord":[a-z]*'
+```
+Expected: `"discord":true`. If it shows `false`, the CLI didn't see the Discord env vars — fix per Task 4's gotcha note (`cp .env supabase/.env`), then `supabase stop && supabase start` and re-check.
 
 - [ ] **Step 4: Generate TypeScript types from the local DB.**
 
