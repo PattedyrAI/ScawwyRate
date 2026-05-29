@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Everrate",
-    "slug": "everrate",
+    "name": "ScawwyRate",
+    "slug": "scawwyrate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "scheme": "everrate",
+    "scheme": "scawwyrate",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -15,15 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.everrate.app",
-      "usesAppleSignIn": true
+      "bundleIdentifier": "com.scawwyrate.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a0a0f"
       },
-      "package": "com.everrate.app",
+      "package": "com.scawwyrate.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -35,17 +34,16 @@
       "expo-router",
       "expo-secure-store",
       "expo-font",
-      "expo-apple-authentication",
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Everrate to access your camera to take photos of drinks."
+          "cameraPermission": "Allow ScawwyRate to access your camera to take photos of things you rate."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Everrate to access your photos to add drink images."
+          "photosPermission": "Allow ScawwyRate to access your photos to add images to ratings."
         }
       ],
       "expo-web-browser"
