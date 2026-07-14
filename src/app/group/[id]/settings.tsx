@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,14 +16,62 @@ import {
 import { colors, spacing } from '@/theme';
 
 const WEBHOOK_PREFIX = 'https://discord.com/api/webhooks/';
+const CONFIRM_DISARM_MS = 4000;
+const CONFIRM_MIN_DELAY_MS = 400;
+
+/**
+ * Web-safe two-tap confirm: first call arms `target`, second call within the
+ * disarm window (and after the minimum delay, so a reflexive double-click
+ * can't blow through the safety) invokes `onConfirm` and disarms. Auto-disarms
+ * after CONFIRM_DISARM_MS. Only one target can be armed at a time.
+ */
+function useTwoTapConfirm<T>() {
+  const [armed, setArmed] = useState<T | null>(null);
+  const armedAtRef = useRef(0);
+  const disarmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (disarmTimeoutRef.current) clearTimeout(disarmTimeoutRef.current);
+    };
+  }, []);
+
+  function disarm() {
+    if (disarmTimeoutRef.current) {
+      clearTimeout(disarmTimeoutRef.current);
+      disarmTimeoutRef.current = null;
+    }
+    setArmed(null);
+  }
+
+  function trigger(target: T, onConfirm: () => void) {
+    if (armed === target) {
+      if (Date.now() - armedAtRef.current >= CONFIRM_MIN_DELAY_MS) {
+        disarm();
+        onConfirm();
+      }
+      // else: too soon after arming — ignore, treat as accidental double-tap.
+      return;
+    }
+    armedAtRef.current = Date.now();
+    setArmed(target);
+    if (disarmTimeoutRef.current) clearTimeout(disarmTimeoutRef.current);
+    disarmTimeoutRef.current = setTimeout(() => {
+      disarmTimeoutRef.current = null;
+      setArmed(null);
+    }, CONFIRM_DISARM_MS);
+  }
+
+  return { armed, trigger };
+}
 
 export default function GroupSettingsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
 
-  const { data: group, isLoading } = useGroup(id);
-  const { data: members } = useGroupMembers(id);
+  const { data: group, isLoading: isGroupLoading } = useGroup(id);
+  const { data: members, isLoading: isMembersLoading } = useGroupMembers(id);
   const updateGroup = useUpdateGroup(id);
   const leaveGroup = useLeaveGroup();
   const removeMember = useRemoveMember(id);
@@ -31,9 +79,12 @@ export default function GroupSettingsScreen() {
 
   const [name, setName] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [webhookError, setWebhookError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'leave' | 'delete' | null>(null);
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leaveDeleteConfirm = useTwoTapConfirm<'leave' | 'delete'>();
+  const removeConfirm = useTwoTapConfirm<string>();
 
   useEffect(() => {
     if (group) {
@@ -44,53 +95,68 @@ export default function GroupSettingsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group?.id]);
 
+  useEffect(() => {
+    return () => {
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+    };
+  }, []);
+
   const isOwner = !!group && !!user && group.owner_id === user.id;
 
   function onSave() {
     const trimmedName = name.trim();
     const trimmedUrl = webhookUrl.trim();
+    let hasError = false;
+
     if (trimmedName.length < 1 || trimmedName.length > 80) {
-      setFormError('Group name must be 1–80 characters.');
-      return;
+      setNameError('Group name must be 1–80 characters.');
+      hasError = true;
+    } else {
+      setNameError(null);
     }
+
     if (trimmedUrl && !trimmedUrl.startsWith(WEBHOOK_PREFIX)) {
-      setFormError(`Webhook URL must start with ${WEBHOOK_PREFIX}`);
-      return;
+      setWebhookError(`Webhook URL must start with ${WEBHOOK_PREFIX}`);
+      hasError = true;
+    } else {
+      setWebhookError(null);
     }
-    setFormError(null);
+
+    if (hasError) return;
+
     updateGroup.mutate(
       { name: trimmedName, discord_webhook_url: trimmedUrl || null },
       {
         onSuccess: () => {
           setSaved(true);
-          setTimeout(() => setSaved(false), 2000);
+          if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+          savedTimeoutRef.current = setTimeout(() => {
+            savedTimeoutRef.current = null;
+            setSaved(false);
+          }, 2000);
         },
-        onError: (e) => setFormError(e.message),
+        onError: (e) => setWebhookError(e.message),
       },
     );
   }
 
   function onLeave() {
-    if (confirmAction !== 'leave') {
-      setConfirmAction('leave');
-      return;
-    }
-    if (!user) return;
-    leaveGroup.mutate(
-      { groupId: id, userId: user.id },
-      { onSuccess: () => router.replace('/(tabs)') },
-    );
+    leaveDeleteConfirm.trigger('leave', () => {
+      if (!user) return;
+      leaveGroup.mutate(
+        { groupId: id, userId: user.id },
+        { onSuccess: () => router.replace('/(tabs)') },
+      );
+    });
   }
 
   function onDelete() {
-    if (confirmAction !== 'delete') {
-      setConfirmAction('delete');
-      return;
-    }
-    deleteGroup.mutate(id, { onSuccess: () => router.replace('/(tabs)') });
+    leaveDeleteConfirm.trigger('delete', () => {
+      deleteGroup.mutate(id, { onSuccess: () => router.replace('/(tabs)') });
+    });
   }
 
-  if (isLoading) {
+  if (isGroupLoading || isMembersLoading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -125,7 +191,13 @@ export default function GroupSettingsScreen() {
           <Text variant="label" color={colors.textSecondary}>
             Group
           </Text>
-          <Input label="Name" value={name} onChangeText={setName} maxLength={80} />
+          <Input
+            label="Name"
+            value={name}
+            onChangeText={setName}
+            maxLength={80}
+            error={nameError ?? undefined}
+          />
           <Input
             label="Discord webhook URL (posting arrives in Phase 4)"
             value={webhookUrl}
@@ -133,7 +205,7 @@ export default function GroupSettingsScreen() {
             placeholder={`${WEBHOOK_PREFIX}…`}
             autoCapitalize="none"
             autoCorrect={false}
-            error={formError ?? undefined}
+            error={webhookError ?? undefined}
           />
           <Button
             title={saved ? 'Saved ✓' : 'Save changes'}
@@ -157,8 +229,19 @@ export default function GroupSettingsScreen() {
               </Text>
             </View>
             {isOwner && m.user_id !== user?.id ? (
-              <Pressable onPress={() => removeMember.mutate(m.user_id)} hitSlop={8}>
-                <Ionicons name="close-circle-outline" size={22} color={colors.error} />
+              <Pressable
+                onPress={() =>
+                  removeConfirm.trigger(m.user_id, () => removeMember.mutate(m.user_id))
+                }
+                hitSlop={8}
+              >
+                {removeConfirm.armed === m.user_id ? (
+                  <Text variant="caption" color={colors.error} style={styles.removeConfirmText}>
+                    Remove?
+                  </Text>
+                ) : (
+                  <Ionicons name="close-circle-outline" size={22} color={colors.error} />
+                )}
               </Pressable>
             ) : null}
           </View>
@@ -167,14 +250,14 @@ export default function GroupSettingsScreen() {
 
       {isOwner ? (
         <Button
-          title={confirmAction === 'delete' ? 'Tap again to delete group' : 'Delete group'}
+          title={leaveDeleteConfirm.armed === 'delete' ? 'Tap again to delete group' : 'Delete group'}
           onPress={onDelete}
           variant="outline"
           loading={deleteGroup.isPending}
         />
       ) : (
         <Button
-          title={confirmAction === 'leave' ? 'Tap again to leave group' : 'Leave group'}
+          title={leaveDeleteConfirm.armed === 'leave' ? 'Tap again to leave group' : 'Leave group'}
           onPress={onLeave}
           variant="outline"
           loading={leaveGroup.isPending}
@@ -193,4 +276,5 @@ const styles = StyleSheet.create({
   section: { gap: spacing.md },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   memberInfo: { flex: 1 },
+  removeConfirmText: { fontWeight: '600' },
 });
