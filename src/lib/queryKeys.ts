@@ -7,4 +7,16 @@ export const queryKeys = {
     detail: (id: string) => ['groups', 'detail', id] as const,
     members: (id: string) => ['groups', 'members', id] as const,
   },
+  categories: {
+    all: ['categories'] as const,
+  },
+  items: {
+    list: (groupId: string) => ['items', 'list', groupId] as const,
+    detail: (itemId: string) => ['items', 'detail', itemId] as const,
+  },
+  ratings: {
+    feed: (groupId: string) => ['ratings', 'feed', groupId] as const,
+    forItem: (itemId: string) => ['ratings', 'item', itemId] as const,
+    mine: (itemId: string, userId: string) => ['ratings', 'mine', itemId, userId] as const,
+  },
 } as const;
