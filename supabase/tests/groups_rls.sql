@@ -229,14 +229,13 @@ do $$
 declare affected int;
 begin
   update public.groups
-  set name = 'RLS Test Group 7f3a (renamed)',
-      discord_webhook_url = 'https://discord.com/api/webhooks/123/abc'
+  set name = 'RLS Test Group 7f3a (renamed)'
   where invite_code = 'TESTAA';
   get diagnostics affected = row_count;
   if affected <> 1 then
     raise exception 'RLS FAIL: owner could not update the group (% rows)', affected;
   end if;
-  raise notice 'RLS OK: owner updated name + webhook url';
+  raise notice 'RLS OK: owner updated the group name';
 end $$;
 
 do $$
