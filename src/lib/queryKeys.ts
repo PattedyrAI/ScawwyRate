@@ -18,5 +18,15 @@ export const queryKeys = {
     feed: (groupId: string) => ['ratings', 'feed', groupId] as const,
     forItem: (itemId: string) => ['ratings', 'item', itemId] as const,
     mine: (itemId: string, userId: string) => ['ratings', 'mine', itemId, userId] as const,
+    detail: (ratingId: string) => ['ratings', 'detail', ratingId] as const,
+  },
+  comments: {
+    forRating: (ratingId: string) => ['comments', 'rating', ratingId] as const,
+  },
+  history: {
+    forRating: (ratingId: string) => ['history', 'rating', ratingId] as const,
+  },
+  stats: {
+    leaderboard: (groupId: string) => ['stats', 'leaderboard', groupId] as const,
   },
 } as const;

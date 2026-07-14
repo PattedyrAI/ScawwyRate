@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Category, Item, Profile, Rating } from '@/types/database';
+import type { Category, Comment, Item, Profile, Rating, RatingHistory } from '@/types/database';
 
 export type ItemWithCategory = Item & {
   categories: Pick<Category, 'slug' | 'name' | 'icon'> | null;
@@ -16,6 +16,20 @@ export type RatingFeedRow = RatingWithAuthor & {
       })
     | null;
 };
+
+export type RatingDetail = RatingFeedRow;
+
+export type CommentWithAuthor = Comment & {
+  profiles: Pick<Profile, 'username' | 'display_name' | 'avatar_url'> | null;
+};
+
+export interface LeaderboardRow {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  rating_count: number;
+  average_score: number;
+}
 
 export interface RateItemInput {
   groupId: string;
@@ -96,6 +110,66 @@ export async function getMyRatingForItem(itemId: string, userId: string): Promis
     .eq('item_id', itemId)
     .eq('user_id', userId)
     .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** A single rating with author + item context (the rating-detail screen). */
+export async function getRating(ratingId: string): Promise<RatingDetail | null> {
+  const { data, error } = await supabase
+    .from('ratings')
+    .select(
+      '*, profiles(username, display_name, avatar_url), items(id, name, category_id, categories(slug, name, icon))',
+    )
+    .eq('id', ratingId)
+    .single();
+  if (error) {
+    if (error.code === 'PGRST116') return null; // not found (or not a member)
+    throw error;
+  }
+  return data;
+}
+
+/** Comments on a rating, oldest first (conversation order). */
+export async function listRatingComments(ratingId: string): Promise<CommentWithAuthor[]> {
+  const { data, error } = await supabase
+    .from('comments')
+    .select('*, profiles(username, display_name, avatar_url)')
+    .eq('rating_id', ratingId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function addComment(ratingId: string, userId: string, body: string): Promise<Comment> {
+  const { data, error } = await supabase
+    .from('comments')
+    .insert({ rating_id: ratingId, user_id: userId, body })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteComment(commentId: string): Promise<void> {
+  const { error } = await supabase.from('comments').delete().eq('id', commentId);
+  if (error) throw error;
+}
+
+/** Prior versions of a rating, newest change first. */
+export async function listRatingHistory(ratingId: string): Promise<RatingHistory[]> {
+  const { data, error } = await supabase
+    .from('rating_history')
+    .select('*')
+    .eq('rating_id', ratingId)
+    .order('changed_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+/** Per-member rating count + average for a group (RLS-scoped SQL function). */
+export async function getGroupLeaderboard(groupId: string): Promise<LeaderboardRow[]> {
+  const { data, error } = await supabase.rpc('group_leaderboard', { gid: groupId });
   if (error) throw error;
   return data;
 }
