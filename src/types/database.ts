@@ -58,6 +58,45 @@ export type Database = {
         }
         Relationships: []
       }
+      comments: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          rating_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          rating_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          rating_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_rating_id_fkey"
+            columns: ["rating_id"]
+            isOneToOne: false
+            referencedRelation: "ratings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           group_id: string
@@ -232,6 +271,41 @@ export type Database = {
         }
         Relationships: []
       }
+      rating_history: {
+        Row: {
+          changed_at: string
+          id: string
+          previous_comment: string | null
+          previous_photo_url: string | null
+          previous_score: number
+          rating_id: string
+        }
+        Insert: {
+          changed_at?: string
+          id?: string
+          previous_comment?: string | null
+          previous_photo_url?: string | null
+          previous_score: number
+          rating_id: string
+        }
+        Update: {
+          changed_at?: string
+          id?: string
+          previous_comment?: string | null
+          previous_photo_url?: string | null
+          previous_score?: number
+          rating_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rating_history_rating_id_fkey"
+            columns: ["rating_id"]
+            isOneToOne: false
+            referencedRelation: "ratings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ratings: {
         Row: {
           comment: string | null
@@ -322,6 +396,16 @@ export type Database = {
         }
       }
       generate_invite_code: { Args: never; Returns: string }
+      group_leaderboard: {
+        Args: { gid: string }
+        Returns: {
+          avatar_url: string
+          average_score: number
+          rating_count: number
+          user_id: string
+          username: string
+        }[]
+      }
       is_group_member: { Args: { gid: string; uid: string }; Returns: boolean }
       is_group_owner: { Args: { gid: string; uid: string }; Returns: boolean }
       join_group: {
@@ -510,10 +594,12 @@ export const Constants = {
   },
 } as const
 
+
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type Group = Database['public']['Tables']['groups']['Row'];
 export type GroupMember = Database['public']['Tables']['group_members']['Row'];
 export type Category = Database['public']['Tables']['categories']['Row'];
 export type Item = Database['public']['Tables']['items']['Row'];
 export type Rating = Database['public']['Tables']['ratings']['Row'];
-
+export type RatingHistory = Database['public']['Tables']['rating_history']['Row'];
+export type Comment = Database['public']['Tables']['comments']['Row'];
