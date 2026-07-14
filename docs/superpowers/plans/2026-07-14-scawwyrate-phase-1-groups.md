@@ -225,6 +225,8 @@ $$;
 revoke execute on function public.create_group(text) from public, anon;
 revoke execute on function public.join_group(text) from public, anon;
 revoke execute on function public.generate_invite_code() from public, anon, authenticated;
+revoke execute on function public.is_group_member(uuid, uuid) from public, anon;
+revoke execute on function public.is_group_owner(uuid, uuid) from public, anon;
 grant execute on function public.create_group(text) to authenticated;
 grant execute on function public.join_group(text) to authenticated;
 grant execute on function public.is_group_member(uuid, uuid) to authenticated;
