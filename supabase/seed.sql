@@ -1,3 +1,4 @@
 -- ScawwyRate seed data.
 -- Phase 0: empty (profiles are created by the handle_new_user trigger on Discord signup).
--- Phase 1 will seed the fixed category set (Food, Movies, Games, Music, Places, Other).
+-- Phase 2 will seed the fixed category set (Food, Movies, Games, Music, Places, Other)
+-- alongside the items table that first references it.
