@@ -1,33 +1,75 @@
-import { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, Button, Avatar } from '@/shared/components/ui';
-import { useAuthStore } from '@/stores/authStore';
-import { getProfile, signOut } from '@/features/auth/auth.service';
-import type { Profile } from '@/types/database';
+import { View, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text, Button, Card, EmptyState } from '@/shared/components/ui';
+import { useMyGroups } from '@/features/groups/hooks/useGroups';
+import type { GroupWithMemberCount } from '@/features/groups/groups.service';
 import { colors, spacing } from '@/theme';
 
-export default function Home() {
-  const user = useAuthStore((s) => s.user);
-  const [profile, setProfile] = useState<Profile | null>(null);
+export default function GroupsScreen() {
+  const insets = useSafeAreaInsets();
+  const { data: groups, isLoading, isError, refetch } = useMyGroups();
 
-  useEffect(() => {
-    if (user?.id) getProfile(user.id).then(setProfile).catch(() => {});
-  }, [user?.id]);
+  if (isLoading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.center}>
+        <Text color={colors.error}>Could not load your groups.</Text>
+        <Button title="Retry" onPress={() => refetch()} variant="outline" />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      {profile?.avatar_url ? <Avatar uri={profile.avatar_url} size="xl" /> : null}
-      <Text style={styles.hello}>
-        {profile ? `Signed in as @${profile.username}` : 'Loading profile…'}
-      </Text>
-      <Text style={styles.note}>Groups & ratings arrive in Phase 1.</Text>
-      <Button title="Sign out" onPress={() => signOut()} />
+    <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
+      <View style={styles.header}>
+        <Text variant="h2">Groups</Text>
+        <View style={styles.headerActions}>
+          <Button title="Join" onPress={() => router.push('/group/join')} variant="outline" size="sm" />
+          <Button title="Create" onPress={() => router.push('/group/create')} size="sm" />
+        </View>
+      </View>
+      <FlatList
+        data={groups ?? []}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }: { item: GroupWithMemberCount }) => {
+          const memberCount = item.group_members[0]?.count ?? 0;
+          return (
+            <Card onPress={() => router.push(`/group/${item.id}`)} style={styles.card}>
+              <Text variant="h3">{item.name}</Text>
+              <Text variant="caption" color={colors.textMuted}>
+                {memberCount} {memberCount === 1 ? 'member' : 'members'}
+              </Text>
+            </Card>
+          );
+        }}
+        ListEmptyComponent={
+          <EmptyState
+            icon="people-outline"
+            title="No groups yet"
+            message="Create a group or join one with an invite code."
+            actionLabel="Create a group"
+            onAction={() => router.push('/group/create')}
+          />
+        }
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, padding: spacing.lg, gap: spacing.md },
-  hello: { fontSize: 20, fontWeight: '700', color: colors.text },
-  note: { fontSize: 14, color: colors.textMuted, marginBottom: spacing.md },
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.lg },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, gap: spacing.md },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
+  headerActions: { flexDirection: 'row', gap: spacing.sm },
+  list: { gap: spacing.md, paddingBottom: spacing.xxl, flexGrow: 1 },
+  card: { gap: spacing.xs },
 });

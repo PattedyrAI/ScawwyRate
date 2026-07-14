@@ -27,10 +27,21 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Groups',
           tabBarIcon: ({ color, size }) => (
             <View>
-              <Ionicons name="home" color={color} size={size} />
+              <Ionicons name="people" color={color} size={size} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <View>
+              <Ionicons name="person-circle" color={color} size={size} />
             </View>
           ),
         }}
