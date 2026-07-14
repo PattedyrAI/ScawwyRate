@@ -86,7 +86,8 @@ enabled = true
 # max_header_length = 4096
 
 [studio]
-enabled = true
+# Disabled: Docker Desktop cannot bind-mount ~/Documents (EPERM). Re-enable after granting Docker file access.
+enabled = false
 # Port to use for Supabase Studio.
 port = 54323
 # External URL of the API server that frontend connects to.
@@ -369,7 +370,8 @@ authorization_url_path = "/oauth/consent"
 allow_dynamic_registration = false
 
 [edge_runtime]
-enabled = true
+# Disabled until Phase 4 (needs the same Docker ~/Documents file-sharing grant as studio).
+enabled = false
 # Supported request policies: `oneshot`, `per_worker`.
 # `per_worker` (default) — enables hot reload during local development.
 # `oneshot` — fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
