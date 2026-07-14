@@ -34,6 +34,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          icon: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          icon: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          icon?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       group_members: {
         Row: {
           group_id: string
@@ -105,6 +129,76 @@ export type Database = {
           },
         ]
       }
+      items: {
+        Row: {
+          average_score: number | null
+          category_id: string
+          created_at: string
+          created_by: string | null
+          group_id: string
+          highest_score: number | null
+          id: string
+          image_url: string | null
+          lowest_score: number | null
+          name: string
+          normalized_name: string
+          rating_count: number
+          total_score: number
+        }
+        Insert: {
+          average_score?: number | null
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          group_id: string
+          highest_score?: number | null
+          id?: string
+          image_url?: string | null
+          lowest_score?: number | null
+          name: string
+          normalized_name: string
+          rating_count?: number
+          total_score?: number
+        }
+        Update: {
+          average_score?: number | null
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          group_id?: string
+          highest_score?: number | null
+          id?: string
+          image_url?: string | null
+          lowest_score?: number | null
+          name?: string
+          normalized_name?: string
+          rating_count?: number
+          total_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -137,6 +231,73 @@ export type Database = {
           username?: string
         }
         Relationships: []
+      }
+      ratings: {
+        Row: {
+          comment: string | null
+          comment_count: number
+          created_at: string
+          group_id: string
+          id: string
+          item_id: string
+          photo_url: string | null
+          review_count: number
+          score: number
+          updated_at: string
+          user_id: string
+          visited_at: string | null
+        }
+        Insert: {
+          comment?: string | null
+          comment_count?: number
+          created_at?: string
+          group_id: string
+          id?: string
+          item_id: string
+          photo_url?: string | null
+          review_count?: number
+          score: number
+          updated_at?: string
+          user_id: string
+          visited_at?: string | null
+        }
+        Update: {
+          comment?: string | null
+          comment_count?: number
+          created_at?: string
+          group_id?: string
+          id?: string
+          item_id?: string
+          photo_url?: string | null
+          review_count?: number
+          score?: number
+          updated_at?: string
+          user_id?: string
+          visited_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -176,6 +337,39 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "groups"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      normalize_name: { Args: { raw: string }; Returns: string }
+      rate_item: {
+        Args: {
+          p_category_id?: string
+          p_comment?: string
+          p_group_id: string
+          p_item_id?: string
+          p_item_name?: string
+          p_photo_url?: string
+          p_score: number
+          p_visited_at?: string
+        }
+        Returns: {
+          comment: string | null
+          comment_count: number
+          created_at: string
+          group_id: string
+          id: string
+          item_id: string
+          photo_url: string | null
+          review_count: number
+          score: number
+          updated_at: string
+          user_id: string
+          visited_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ratings"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -319,4 +513,7 @@ export const Constants = {
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type Group = Database['public']['Tables']['groups']['Row'];
 export type GroupMember = Database['public']['Tables']['group_members']['Row'];
+export type Category = Database['public']['Tables']['categories']['Row'];
+export type Item = Database['public']['Tables']['items']['Row'];
+export type Rating = Database['public']['Tables']['ratings']['Row'];
 
