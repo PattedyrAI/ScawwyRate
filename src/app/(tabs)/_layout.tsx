@@ -1,9 +1,19 @@
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/theme';
 
 export default function TabsLayout() {
+  const session = useAuthStore((s) => s.session);
+  const isLoading = useAuthStore((s) => s.isLoading);
+
+  // Guard the whole signed-in group: sign-out (or a logged-out deep link)
+  // must land on welcome, not a dead tab shell.
+  if (!session && !isLoading) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
+
   return (
     <Tabs
       screenOptions={{
