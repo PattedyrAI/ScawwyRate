@@ -11,17 +11,26 @@ export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const signOut = useSignOut();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    if (user?.id) getProfile(user.id).then(setProfile).catch(() => {});
-  }, [user?.id]);
+    if (!user?.id) return;
+    setFailed(false);
+    getProfile(user.id)
+      .then(setProfile)
+      .catch(() => setFailed(true));
+  }, [user?.id, retryKey]);
 
   return (
     <View style={styles.container}>
       {profile?.avatar_url ? <Avatar uri={profile.avatar_url} size="xl" /> : null}
       <Text style={styles.hello}>
-        {profile ? `Signed in as @${profile.username}` : 'Loading profile…'}
+        {profile ? `Signed in as @${profile.username}` : failed ? 'Could not load your profile.' : 'Loading profile…'}
       </Text>
+      {failed ? (
+        <Button title="Retry" onPress={() => setRetryKey((k) => k + 1)} variant="outline" size="sm" />
+      ) : null}
       <Button title="Sign out" onPress={() => signOut.mutate()} loading={signOut.isPending} />
     </View>
   );

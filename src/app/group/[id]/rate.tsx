@@ -173,6 +173,7 @@ export default function RateScreen() {
             placeholder="e.g. Pizza Palace"
             value={name}
             onChangeText={setName}
+            maxLength={120}
             autoFocus
           />
           {suggestions.length > 0 ? (
