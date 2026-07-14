@@ -42,8 +42,7 @@ export default function RootLayout() {
         >
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="group/create" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="group/join" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="group" />
         </Stack>
       </QueryClientProvider>
       </ErrorBoundary>
