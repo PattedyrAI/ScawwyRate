@@ -100,6 +100,9 @@ export default function GroupFeedScreen() {
         <Text variant="h3" style={styles.headerTitle} numberOfLines={1}>
           {group.name}
         </Text>
+        <Pressable onPress={() => router.push(`/group/${group.id}/stats`)} hitSlop={12}>
+          <Ionicons name="stats-chart-outline" size={22} color={colors.text} />
+        </Pressable>
         <Pressable onPress={() => router.push(`/group/${group.id}/settings`)} hitSlop={12}>
           <Ionicons name="settings-outline" size={24} color={colors.text} />
         </Pressable>
@@ -122,7 +125,7 @@ export default function GroupFeedScreen() {
         renderItem={({ item: r }: { item: RatingFeedRow }) => (
           <Card
             style={styles.feedCard}
-            onPress={r.items ? () => router.push(`/group/${group.id}/item/${r.items!.id}`) : undefined}
+            onPress={() => router.push(`/group/${group.id}/rating/${r.id}`)}
           >
             <View style={styles.feedTop}>
               <Avatar uri={r.profiles?.avatar_url} name={r.profiles?.username} size="sm" />

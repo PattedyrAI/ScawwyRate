@@ -93,7 +93,10 @@ export default function ItemDetailScreen() {
         ListHeaderComponent={listHeader}
         contentContainerStyle={styles.list}
         renderItem={({ item: r }: { item: RatingWithAuthor }) => (
-          <Card style={styles.ratingCard}>
+          <Card
+            style={styles.ratingCard}
+            onPress={() => router.push(`/group/${groupId}/rating/${r.id}`)}
+          >
             <View style={styles.ratingTop}>
               <Avatar uri={r.profiles?.avatar_url} name={r.profiles?.username} size="sm" />
               <View style={styles.ratingWho}>
