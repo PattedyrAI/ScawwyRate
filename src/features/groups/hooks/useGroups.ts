@@ -48,11 +48,29 @@ export function useJoinGroup() {
 export function useUpdateGroup(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (updates: { name?: string; discord_webhook_url?: string | null }) =>
-      groupsService.updateGroup(groupId, updates),
+    mutationFn: (updates: { name?: string }) => groupsService.updateGroup(groupId, updates),
     onSuccess: (group) => {
       queryClient.setQueryData(queryKeys.groups.detail(groupId), group);
       queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
+    },
+  });
+}
+
+/** Owner-only: the group's Discord webhook URL (null when unset or not owner). */
+export function useGroupWebhook(groupId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.groups.webhook(groupId),
+    queryFn: () => groupsService.getGroupWebhook(groupId),
+    enabled: !!groupId && enabled,
+  });
+}
+
+export function useSetGroupWebhook(groupId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (url: string | null) => groupsService.setGroupWebhook(groupId, url),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.groups.webhook(groupId) });
     },
   });
 }

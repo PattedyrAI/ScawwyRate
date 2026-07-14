@@ -9,8 +9,10 @@ import {
   useDeleteGroup,
   useGroup,
   useGroupMembers,
+  useGroupWebhook,
   useLeaveGroup,
   useRemoveMember,
+  useSetGroupWebhook,
   useUpdateGroup,
 } from '@/features/groups/hooks/useGroups';
 import { colors, spacing } from '@/theme';
@@ -76,6 +78,7 @@ export default function GroupSettingsScreen() {
   const leaveGroup = useLeaveGroup();
   const removeMember = useRemoveMember(id);
   const deleteGroup = useDeleteGroup();
+  const setWebhook = useSetGroupWebhook(id);
 
   const [name, setName] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -91,11 +94,18 @@ export default function GroupSettingsScreen() {
   useEffect(() => {
     if (group) {
       setName(group.name);
-      setWebhookUrl(group.discord_webhook_url ?? '');
     }
     // Re-sync the form only when a different group loads, not on every refetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group?.id]);
+
+  const isOwnerForWebhook = !!group && !!user && group.owner_id === user.id;
+  const { data: webhookData } = useGroupWebhook(id, isOwnerForWebhook);
+  useEffect(() => {
+    setWebhookUrl(webhookData ?? '');
+    // Sync only when the fetched webhook changes (owner-only query).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [webhookData]);
 
   useEffect(() => {
     return () => {
@@ -128,15 +138,21 @@ export default function GroupSettingsScreen() {
 
     setFormError(null);
     updateGroup.mutate(
-      { name: trimmedName, discord_webhook_url: trimmedUrl || null },
+      { name: trimmedName },
       {
         onSuccess: () => {
-          setSaved(true);
-          if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
-          savedTimeoutRef.current = setTimeout(() => {
-            savedTimeoutRef.current = null;
-            setSaved(false);
-          }, 2000);
+          // Webhook lives in its own owner-scoped table; save it after the rename succeeds.
+          setWebhook.mutate(trimmedUrl || null, {
+            onSuccess: () => {
+              setSaved(true);
+              if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+              savedTimeoutRef.current = setTimeout(() => {
+                savedTimeoutRef.current = null;
+                setSaved(false);
+              }, 2000);
+            },
+            onError: () => setFormError('Name saved, but the webhook could not be saved. Try again.'),
+          });
         },
         // Server/network failures are form-level, not a problem with either field.
         onError: () => setFormError('Could not save changes. Check your connection and try again.'),
@@ -236,7 +252,7 @@ export default function GroupSettingsScreen() {
           <Button
             title={saved ? 'Saved ✓' : 'Save changes'}
             onPress={onSave}
-            loading={updateGroup.isPending}
+            loading={updateGroup.isPending || setWebhook.isPending}
           />
         </Card>
       ) : null}

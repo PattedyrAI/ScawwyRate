@@ -133,10 +133,35 @@ export type Database = {
           },
         ]
       }
+      group_webhooks: {
+        Row: {
+          group_id: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          group_id: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          group_id?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_webhooks_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
           created_at: string
-          discord_webhook_url: string | null
           id: string
           invite_code: string
           name: string
@@ -144,7 +169,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          discord_webhook_url?: string | null
           id?: string
           invite_code: string
           name: string
@@ -152,7 +176,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          discord_webhook_url?: string | null
           id?: string
           invite_code?: string
           name?: string
@@ -382,7 +405,6 @@ export type Database = {
         Args: { group_name: string }
         Returns: {
           created_at: string
-          discord_webhook_url: string | null
           id: string
           invite_code: string
           name: string
@@ -412,7 +434,6 @@ export type Database = {
         Args: { code: string }
         Returns: {
           created_at: string
-          discord_webhook_url: string | null
           id: string
           invite_code: string
           name: string
@@ -603,3 +624,4 @@ export type Item = Database['public']['Tables']['items']['Row'];
 export type Rating = Database['public']['Tables']['ratings']['Row'];
 export type RatingHistory = Database['public']['Tables']['rating_history']['Row'];
 export type Comment = Database['public']['Tables']['comments']['Row'];
+export type GroupWebhook = Database['public']['Tables']['group_webhooks']['Row'];

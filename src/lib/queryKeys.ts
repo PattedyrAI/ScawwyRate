@@ -6,6 +6,7 @@ export const queryKeys = {
     all: ['groups'] as const,
     detail: (id: string) => ['groups', 'detail', id] as const,
     members: (id: string) => ['groups', 'members', id] as const,
+    webhook: (id: string) => ['groups', 'webhook', id] as const,
   },
   categories: {
     all: ['categories'] as const,

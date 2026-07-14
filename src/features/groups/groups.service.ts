@@ -58,7 +58,7 @@ export async function joinGroup(code: string): Promise<Group> {
 
 export async function updateGroup(
   groupId: string,
-  updates: { name?: string; discord_webhook_url?: string | null },
+  updates: { name?: string },
 ): Promise<Group> {
   const { data, error } = await supabase
     .from('groups')
@@ -68,6 +68,30 @@ export async function updateGroup(
     .single();
   if (error) throw error;
   return data;
+}
+
+/** Owner-only (RLS): the group's Discord webhook, or null when unset/not owner. */
+export async function getGroupWebhook(groupId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('group_webhooks')
+    .select('url')
+    .eq('group_id', groupId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.url ?? null;
+}
+
+/** Owner-only (RLS): set, replace, or clear (null) the group's webhook. */
+export async function setGroupWebhook(groupId: string, url: string | null): Promise<void> {
+  if (url === null) {
+    const { error } = await supabase.from('group_webhooks').delete().eq('group_id', groupId);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await supabase
+    .from('group_webhooks')
+    .upsert({ group_id: groupId, url }, { onConflict: 'group_id' });
+  if (error) throw error;
 }
 
 /**
