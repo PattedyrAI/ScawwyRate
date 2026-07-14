@@ -23,6 +23,7 @@ export default function GroupLayout() {
     >
       <Stack.Screen name="create" options={{ presentation: 'modal' }} />
       <Stack.Screen name="join" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="[id]/rate" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }
