@@ -91,7 +91,10 @@ begin
      or it.highest_score <> 8 or it.lowest_score <> 6 then
     raise exception 'TRIGGER FAIL: stats wrong after dedup rating (cnt % avg %)', it.rating_count, it.average_score;
   end if;
-  raise notice 'DEDUP/TRIGGER OK: same item, stats cnt=2 avg=7.0 high=8 low=6';
+  if it.category_id <> current_setting('test.cat_food')::uuid then
+    raise exception 'DEDUP FAIL: existing item''s category was changed by a later rating';
+  end if;
+  raise notice 'DEDUP/TRIGGER OK: same item, stats cnt=2 avg=7.0 high=8 low=6, category kept';
 end $$;
 
 -- ---------------------------------------------------------------------------
@@ -114,6 +117,29 @@ begin
   where group_id = current_setting('test.gid_a')::uuid and normalized_name = 'bounds probe';
   if n <> 0 then raise exception 'BOUNDS FAIL: rejected score still created an item'; end if;
   raise notice 'BOUNDS OK: score 11 rejected, no orphan item';
+end $$;
+
+-- Lower bound: score 0 rejected AND no orphan item or rating side effects.
+do $$
+declare ok boolean := false; n int;
+begin
+  begin
+    perform public.rate_item(
+      p_group_id    := current_setting('test.gid_a')::uuid,
+      p_score       := 0,
+      p_item_name   := 'Bounds Probe Low',
+      p_category_id := current_setting('test.cat_food')::uuid
+    );
+  exception when others then ok := sqlerrm like '%invalid_score%';
+  end;
+  if not ok then raise exception 'BOUNDS FAIL: score 0 was accepted'; end if;
+  select count(*) into n from public.items
+  where group_id = current_setting('test.gid_a')::uuid and normalized_name = 'bounds probe low';
+  if n <> 0 then raise exception 'BOUNDS FAIL: rejected score still created an item'; end if;
+  select count(*) into n from public.ratings
+  where group_id = current_setting('test.gid_a')::uuid;
+  if n <> 2 then raise exception 'BOUNDS FAIL: rejected score changed ratings (% rows, expected 2)', n; end if;
+  raise notice 'BOUNDS OK: score 0 rejected, no orphan item or rating';
 end $$;
 
 -- ---------------------------------------------------------------------------
