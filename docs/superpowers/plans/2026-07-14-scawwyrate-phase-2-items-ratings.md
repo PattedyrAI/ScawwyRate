@@ -280,9 +280,6 @@ begin
     if p_item_name is null or btrim(p_item_name) = '' then
       raise exception 'item_name_required';
     end if;
-    if p_category_id is null then
-      raise exception 'category_required';
-    end if;
 
     select * into v_item
     from public.items
@@ -290,6 +287,12 @@ begin
       and normalized_name = public.normalize_name(p_item_name);
 
     if not found then
+      -- Only the create path needs a category; re-rating an existing item
+      -- by name must not require one.
+      if p_category_id is null then
+        raise exception 'category_required';
+      end if;
+
       insert into public.items (group_id, name, category_id, created_by)
       values (p_group_id, btrim(p_item_name), p_category_id, uid)
       on conflict (group_id, normalized_name) do nothing
