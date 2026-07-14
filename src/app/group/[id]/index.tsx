@@ -94,6 +94,15 @@ export default function GroupFeedScreen() {
         </Pressable>
       </View>
 
+      {isError && feed && feed.length > 0 ? (
+        <View style={styles.refetchErrorBanner}>
+          <Text variant="bodySmall" color={colors.error} style={styles.refetchErrorText}>
+            Couldn&apos;t refresh the feed.
+          </Text>
+          <Button title="Retry" onPress={() => refetch()} variant="ghost" size="sm" />
+        </View>
+      ) : null}
+
       <FlatList
         data={feed ?? []}
         keyExtractor={(r) => r.id}
@@ -102,7 +111,7 @@ export default function GroupFeedScreen() {
         renderItem={({ item: r }: { item: RatingFeedRow }) => (
           <Card
             style={styles.feedCard}
-            onPress={() => r.items && router.push(`/group/${group.id}/item/${r.items.id}`)}
+            onPress={r.items ? () => router.push(`/group/${group.id}/item/${r.items!.id}`) : undefined}
           >
             <View style={styles.feedTop}>
               <Avatar uri={r.profiles?.avatar_url} name={r.profiles?.username} size="sm" />
@@ -170,4 +179,17 @@ const styles = StyleSheet.create({
   feedPhoto: { width: '100%', height: 180, borderRadius: borderRadius.md, backgroundColor: colors.surfaceLight },
   feedLoading: { marginTop: spacing.xxl },
   feedError: { alignItems: 'center', gap: spacing.md, marginTop: spacing.xxl },
+  refetchErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.error,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  refetchErrorText: { flex: 1, marginRight: spacing.sm },
 });
