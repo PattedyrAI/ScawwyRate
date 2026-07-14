@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Button, Input } from '@/shared/components/ui';
 import { useJoinGroup } from '@/features/groups/hooks/useGroups';
+import { friendlyError } from '@/shared/utils/friendlyError';
 import { colors, spacing } from '@/theme';
 
 export default function JoinGroupScreen() {
@@ -22,11 +23,7 @@ export default function JoinGroupScreen() {
     joinGroup.mutate(trimmed, {
       onSuccess: (group) => router.replace(`/group/${group.id}`),
       onError: (e) =>
-        setError(
-          e.message.includes('invalid_invite_code')
-            ? 'That code does not match any group.'
-            : e.message,
-        ),
+        setError(friendlyError(e, { invalid_invite_code: 'That code does not match any group.' })),
     });
   }
 
@@ -40,7 +37,10 @@ export default function JoinGroupScreen() {
         label="Invite code"
         placeholder="ABC234"
         value={code}
-        onChangeText={(t) => setCode(t.toUpperCase())}
+        onChangeText={(t) => {
+          setCode(t.toUpperCase());
+          if (error) setError(null);
+        }}
         maxLength={6}
         autoCapitalize="characters"
         autoCorrect={false}

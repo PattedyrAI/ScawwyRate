@@ -1,7 +1,7 @@
-import { View, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Button, Card, EmptyState } from '@/shared/components/ui';
+import { Text, Button, Card, EmptyState, LoadingSkeleton } from '@/shared/components/ui';
 import { useMyGroups } from '@/features/groups/hooks/useGroups';
 import type { GroupWithMemberCount } from '@/features/groups/groups.service';
 import { colors, spacing } from '@/theme';
@@ -12,8 +12,10 @@ export default function GroupsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.skeletons, { paddingTop: insets.top + spacing.lg }]}>
+        <LoadingSkeleton width="100%" height={72} />
+        <LoadingSkeleton width="100%" height={72} />
+        <LoadingSkeleton width="100%" height={72} />
       </View>
     );
   }
@@ -68,6 +70,7 @@ export default function GroupsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.lg },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, gap: spacing.md },
+  skeletons: { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.lg, gap: spacing.md },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
   headerActions: { flexDirection: 'row', gap: spacing.sm },
   list: { gap: spacing.md, paddingBottom: spacing.xxl, flexGrow: 1 },

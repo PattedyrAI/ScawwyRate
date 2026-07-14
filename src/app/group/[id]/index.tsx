@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, FlatList, StyleSheet, Pressable, ActivityIndicator, Image } from 'react-native';
+import { View, FlatList, StyleSheet, Pressable, Image } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Button, Card, Avatar, ScoreDisplay, TagChip, EmptyState } from '@/shared/components/ui';
+import { Text, Button, Card, Avatar, ScoreDisplay, TagChip, EmptyState, LoadingSkeleton } from '@/shared/components/ui';
 import { useGroup } from '@/features/groups/hooks/useGroups';
 import { useGroupFeed } from '@/features/items/hooks/useItems';
 import type { RatingFeedRow } from '@/features/items/items.service';
@@ -14,7 +14,7 @@ import { colors, spacing, borderRadius } from '@/theme';
 export default function GroupFeedScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const { data: group, isLoading: isGroupLoading } = useGroup(id);
+  const { data: group, isLoading: isGroupLoading, isError: isGroupError, refetch: refetchGroup } = useGroup(id);
   const { data: feed, isLoading: isFeedLoading, isError, refetch } = useGroupFeed(id);
   const [copied, setCopied] = useState(false);
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -38,8 +38,19 @@ export default function GroupFeedScreen() {
 
   if (isGroupLoading) {
     return (
+      <View style={[styles.skeletons, { paddingTop: insets.top + spacing.lg }]}>
+        <LoadingSkeleton width="100%" height={96} />
+        <LoadingSkeleton width="100%" height={72} />
+        <LoadingSkeleton width="100%" height={72} />
+      </View>
+    );
+  }
+
+  if (isGroupError) {
+    return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <Text color={colors.error}>Could not load this group.</Text>
+        <Button title="Retry" onPress={() => refetchGroup()} variant="outline" />
       </View>
     );
   }
@@ -139,7 +150,10 @@ export default function GroupFeedScreen() {
         )}
         ListEmptyComponent={
           isFeedLoading ? (
-            <ActivityIndicator size="large" color={colors.primary} style={styles.feedLoading} />
+            <View style={styles.feedSkeletons}>
+              <LoadingSkeleton width="100%" height={96} />
+              <LoadingSkeleton width="100%" height={96} />
+            </View>
           ) : isError ? (
             <View style={styles.feedError}>
               <Text color={colors.error}>Could not load the feed.</Text>
@@ -163,6 +177,8 @@ export default function GroupFeedScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.lg },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, gap: spacing.md },
+  skeletons: { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.lg, gap: spacing.md },
+  feedSkeletons: { gap: spacing.md, marginTop: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.lg },
   headerTitle: { flex: 1 },
   list: { gap: spacing.md, paddingBottom: spacing.xxl, flexGrow: 1 },
@@ -177,7 +193,6 @@ const styles = StyleSheet.create({
   feedItemRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   feedItemName: { flexShrink: 1 },
   feedPhoto: { width: '100%', height: 180, borderRadius: borderRadius.md, backgroundColor: colors.surfaceLight },
-  feedLoading: { marginTop: spacing.xxl },
   feedError: { alignItems: 'center', gap: spacing.md, marginTop: spacing.xxl },
   refetchErrorBanner: {
     flexDirection: 'row',

@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Button, Input } from '@/shared/components/ui';
 import { useCreateGroup } from '@/features/groups/hooks/useGroups';
+import { friendlyError } from '@/shared/utils/friendlyError';
 import { colors, spacing } from '@/theme';
 
 export default function CreateGroupScreen() {
@@ -21,7 +22,7 @@ export default function CreateGroupScreen() {
     setError(null);
     createGroup.mutate(trimmed, {
       onSuccess: (group) => router.replace(`/group/${group.id}`),
-      onError: (e) => setError(e.message),
+      onError: (e) => setError(friendlyError(e, { invalid_group_name: 'Group name must be 1–80 characters.' })),
     });
   }
 
@@ -35,7 +36,10 @@ export default function CreateGroupScreen() {
         label="Group name"
         placeholder="e.g. Movie Night"
         value={name}
-        onChangeText={setName}
+        onChangeText={(t) => {
+          setName(t);
+          if (error) setError(null);
+        }}
         maxLength={80}
         autoFocus
         error={error ?? undefined}

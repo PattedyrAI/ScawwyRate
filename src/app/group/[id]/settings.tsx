@@ -70,7 +70,7 @@ export default function GroupSettingsScreen() {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
 
-  const { data: group, isLoading: isGroupLoading } = useGroup(id);
+  const { data: group, isLoading: isGroupLoading, isError: isGroupError, refetch: refetchGroup } = useGroup(id);
   const { data: members, isLoading: isMembersLoading } = useGroupMembers(id);
   const updateGroup = useUpdateGroup(id);
   const leaveGroup = useLeaveGroup();
@@ -81,6 +81,8 @@ export default function GroupSettingsScreen() {
   const [webhookUrl, setWebhookUrl] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
   const [webhookError, setWebhookError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [dangerError, setDangerError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaveDeleteConfirm = useTwoTapConfirm<'leave' | 'delete'>();
@@ -124,6 +126,7 @@ export default function GroupSettingsScreen() {
 
     if (hasError) return;
 
+    setFormError(null);
     updateGroup.mutate(
       { name: trimmedName, discord_webhook_url: trimmedUrl || null },
       {
@@ -135,7 +138,8 @@ export default function GroupSettingsScreen() {
             setSaved(false);
           }, 2000);
         },
-        onError: (e) => setWebhookError(e.message),
+        // Server/network failures are form-level, not a problem with either field.
+        onError: () => setFormError('Could not save changes. Check your connection and try again.'),
       },
     );
   }
@@ -143,16 +147,24 @@ export default function GroupSettingsScreen() {
   function onLeave() {
     leaveDeleteConfirm.trigger('leave', () => {
       if (!user) return;
+      setDangerError(null);
       leaveGroup.mutate(
         { groupId: id, userId: user.id },
-        { onSuccess: () => router.replace('/(tabs)') },
+        {
+          onSuccess: () => router.replace('/(tabs)'),
+          onError: () => setDangerError('Could not leave the group. Try again.'),
+        },
       );
     });
   }
 
   function onDelete() {
     leaveDeleteConfirm.trigger('delete', () => {
-      deleteGroup.mutate(id, { onSuccess: () => router.replace('/(tabs)') });
+      setDangerError(null);
+      deleteGroup.mutate(id, {
+        onSuccess: () => router.replace('/(tabs)'),
+        onError: () => setDangerError('Could not delete the group. Try again.'),
+      });
     });
   }
 
@@ -160,6 +172,15 @@ export default function GroupSettingsScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (isGroupError) {
+    return (
+      <View style={styles.center}>
+        <Text color={colors.error}>Could not load this group.</Text>
+        <Button title="Retry" onPress={() => refetchGroup()} variant="outline" />
       </View>
     );
   }
@@ -207,6 +228,11 @@ export default function GroupSettingsScreen() {
             autoCorrect={false}
             error={webhookError ?? undefined}
           />
+          {formError ? (
+            <Text variant="caption" color={colors.error}>
+              {formError}
+            </Text>
+          ) : null}
           <Button
             title={saved ? 'Saved ✓' : 'Save changes'}
             onPress={onSave}
@@ -231,7 +257,12 @@ export default function GroupSettingsScreen() {
             {isOwner && m.user_id !== user?.id ? (
               <Pressable
                 onPress={() =>
-                  removeConfirm.trigger(m.user_id, () => removeMember.mutate(m.user_id))
+                  removeConfirm.trigger(m.user_id, () => {
+                    setDangerError(null);
+                    removeMember.mutate(m.user_id, {
+                      onError: () => setDangerError('Could not remove the member. Try again.'),
+                    });
+                  })
                 }
                 hitSlop={8}
               >
@@ -247,6 +278,12 @@ export default function GroupSettingsScreen() {
           </View>
         ))}
       </Card>
+
+      {dangerError ? (
+        <Text variant="caption" color={colors.error}>
+          {dangerError}
+        </Text>
+      ) : null}
 
       {isOwner ? (
         <Button
